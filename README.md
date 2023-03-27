@@ -16,7 +16,7 @@ DevOps pipeline for the sample solution based on Blazor Server model which works
 
 Install [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) on operation system which you are using.  
 
->Attention! Attention! The next steps below (till section 3) are optional.
+>Attention! The next steps below (till section 3) are optional.
 
 If you are using Windows 11 or Windows 10 it is more appropriate to use WSL 2 and install Docker Desktop on Ubuntu-20.04.
 
@@ -48,7 +48,7 @@ Start Docker service.
 sudo service docker start
 sudo service docker status
 ```
-You can clone (this solution)[https://github.com/KarenTazayan/Tuning-Blazor-Server-Performance-With-Microsoft-Azure] into C:\ drive on your Windows machine ([Git CLI](https://git-scm.com/download/win) is required)
+You can clone [this solution](https://github.com/KarenTazayan/Tuning-Blazor-Server-Performance-With-Microsoft-Azure) into C:\ drive on your Windows machine ([Git CLI](https://git-scm.com/download/win) is required)
 ```
 mkdir C:\Repos
 cd C:\Repos
