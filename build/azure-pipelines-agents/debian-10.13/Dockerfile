@@ -21,6 +21,7 @@ WORKDIR /azcli
 COPY ./az_cli_install.sh .
 RUN chmod +x az_cli_install.sh
 RUN ./az_cli_install.sh
+ENV AZURE_CLI=True
 
 # Install the .NET SDK 7.0
 RUN apt-get install wget

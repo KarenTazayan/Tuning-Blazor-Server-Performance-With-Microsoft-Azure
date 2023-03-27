@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Microsoft.ApplicationInsights;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using MudBlazor;
 using ShoppingApp.Common;
 using ShoppingApp.WebUI.Services;
@@ -7,7 +9,7 @@ using MudSeverity = MudBlazor.Severity;
 
 namespace ShoppingApp.WebUI.Shared;
 
-public partial class MainLayout
+public partial class MainLayout : IDisposable
 {
     private const string PrefersDarkThemeKey = "prefers-dark-scheme";
 
@@ -60,14 +62,27 @@ public partial class MainLayout
         },
     };
 
-    bool _drawerOpen = true;
-    bool _isDarkTheme;
+    private bool _drawerOpen = true;
+    private bool _isDarkTheme;
 
     [Inject]
     public ToastService ToastService { get; set; } = null!;
 
     [Inject]
     public ISnackbar Snackbar { get; set; } = null!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
+
+    [Inject]
+    private TelemetryClient TelemetryClient { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to the event
+        NavigationManager.LocationChanged += LocationChanged;
+        base.OnInitialized();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -96,10 +111,21 @@ public partial class MainLayout
             var (_, message) = tuple;
 
             Snackbar.Add(
-                message, 
+                message,
                 MudSeverity.Success,
                 options => options.CloseAfterNavigation = true);
         });
 
     private void DrawerToggle() => _drawerOpen = !_drawerOpen;
+
+    private void LocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        string navigationMethod = e.IsNavigationIntercepted ? "HTML" : "code";
+        //TelemetryClient.TrackPageView(e.Location);
+    }
+
+    void IDisposable.Dispose()
+    {
+        NavigationManager.LocationChanged -= LocationChanged;
+    }
 }

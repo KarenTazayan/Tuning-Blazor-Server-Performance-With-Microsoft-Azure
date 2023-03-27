@@ -1,7 +1,8 @@
 # https://aka.ms/yaml
 variables:
-  # d - development a - advanced => da
-  nameSuffix: 'da1'
+  # Staging 'sa1, sa2 sa3, ...'
+  # s - staging a - advanced => sa
+  nameSuffix: 'sa1'
   appNamePrefix: 'shoppingapp'
 
 trigger:
@@ -21,12 +22,6 @@ stages:
     - job: Build_Solution
       displayName: Whole solution build process
       steps:
-      - task: UseDotNet@2
-        displayName: 'Use .NET 7.0.201 sdk'
-        inputs:
-          packageType: sdk
-          version: 7.0.201
-
       - task: DotNetCoreCLI@2
         displayName: 'Build solution ShoppingApp.sln'
         inputs:
@@ -41,7 +36,7 @@ stages:
           command: test
           projects: |
             test/ShoppingApp.Tests
-            publishTestResults: true
+          publishTestResults: true
 
 ##################### Packing Infrastructure Artifacts Stage #####################
 
@@ -81,6 +76,8 @@ stages:
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   pool:
     name: Default
+    demands:
+      - AZURE_CLI -equals True
   variables:
     azureServiceConnection: 'DefaultAzureServiceConnection'
     resourceGroupName: 'rg-shopping-app-main'
@@ -128,6 +125,8 @@ stages:
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   pool:
     name: Default
+    demands:
+      - docker
   variables:
     acrUrl: $[ stageDependencies.Provision_Azure_Container_Registry.Deploy_Azure_Container_Registry.outputs['t2.acrUrl'] ]
     acrLogin: $[ stageDependencies.Provision_Azure_Container_Registry.Deploy_Azure_Container_Registry.outputs['t2.acrLogin'] ]
@@ -193,10 +192,8 @@ stages:
     displayName: Deploy staging infrastructure in Azure
     pool:
       name: Default
-    variables:
-      # Staging 'sa1, sa2 sa3, ...'
-      # d - staging a - advanced => sa
-      nameSuffix: 'sa1'
+      demands:
+        - AZURE_CLI -equals True
     environment: 'Staging'
     strategy: 
       runOnce:
@@ -219,6 +216,7 @@ stages:
 
           - task: AzureCLI@2
             displayName: 'Deploy the whole infrastructure to Azure'
+            name: t1
             inputs:
               azureSubscription: 'DefaultAzureServiceConnection'
               addSpnToEnvironment: true
@@ -227,8 +225,90 @@ stages:
               inlineScript: |
                 az --version
                 az group create --name $(resourceGroupName)-$(nameSuffix) --location $(location)
-                az deployment group create --resource-group $(resourceGroupName)-$(nameSuffix) \
+                DEPLOYMENT_OUTPUT=$(az deployment group create --resource-group $(resourceGroupName)-$(nameSuffix) \
                   --template-file $(templateFile) --parameters nameSuffix='$(nameSuffix)' \
                   appNamePrefix='$(appNamePrefix)' semVer='$(GitVersion.SemVer)' sqlAdministratorPassword='Passw@rd1+' \
                   acrUrl='$(acrUrl)' acrLogin='$(acrLogin)' acrPassword='$(acrPassword)' \
-                  executorSecurityPrincipal=${servicePrincipalId}
+                  executorSecurityPrincipal=${servicePrincipalId} --query properties.outputs)
+                WEBUI_CA_URL=$(jq --raw-output '.webUiCaUrl.value' <<< $DEPLOYMENT_OUTPUT)
+                echo "##vso[task.setvariable variable=webUiCaUrl;isOutput=true]$WEBUI_CA_URL"
+                echo "WEBUI_CA_URL value is: $WEBUI_CA_URL"
+
+##################### Launch End To End Testing #####################
+
+- stage: Launch_End_To_End_Testing
+  displayName: Launch end to end testing stage
+  dependsOn:
+  - Provision_Staging_Infrastructure
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  variables:
+    webUiCaUrl: $[ stageDependencies.Provision_Staging_Infrastructure.Deploy_Infrastructure_Staging.outputs['Deploy_Infrastructure_Staging.t1.webUiCaUrl'] ]
+  jobs:
+  - job: Run_End_To_End_Tests
+    pool:
+      name: Default
+      demands:
+      - PLAYWRIGHT_BROWSERS_PATH -equals /ms-playwright
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Create a manifest file
+      inputs:
+        command: custom
+        custom: 'new'
+        arguments: tool-manifest
+    - task: DotNetCoreCLI@2
+      displayName: Install Playwright CLI
+      inputs:
+        command: custom
+        custom: 'tool'
+        arguments: install Microsoft.Playwright.CLI
+    - task: DotNetCoreCLI@2
+      displayName: Build ShoppingApp.E2ETests
+      inputs:
+        command: 'build'
+        projects: |
+          test/ShoppingApp.E2ETests
+    - task: DotNetCoreCLI@2
+      displayName: Install Playwright
+      inputs:
+        command: custom
+        custom: 'tool'
+        arguments: run playwright install
+    - task: DotNetCoreCLI@2
+      displayName: 'Run E2E Tests'
+      inputs:
+        command: test
+        arguments: '-- TestRunParameters.Parameter(name="\""webUiCaUrl"\"", value="\""$(webUiCaUrl)"\"")'
+        projects: |
+          test/ShoppingApp.E2ETests
+        publishTestResults: true
+
+##################### Launch Load Testing #####################
+
+- stage: Launch_Load_Testing
+  displayName: Launch load testing stage
+  dependsOn:
+  - Provision_Staging_Infrastructure
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  variables:
+    webUiCaUrl: $[ stageDependencies.Provision_Staging_Infrastructure.Deploy_Infrastructure_Staging.outputs['Deploy_Infrastructure_Staging.t1.webUiCaUrl'] ]
+    azureServiceConnection: 'DefaultAzureServiceConnection'
+    resourceGroupName: 'rg-shopping-app'
+  jobs:
+  - job: Run_Load_Tests
+    pool:
+      name: Default
+    steps:
+    - task: AzureLoadTest@1
+      inputs:
+        azureSubscription: 'DefaultAzureServiceConnection'
+        loadTestConfigFile: 'test/ShoppingApp.LoadTests/ShoppingApp.WebUI.DefaultTests.yaml'
+        resourceGroup: $(resourceGroupName)-$(nameSuffix)
+        loadTestResource: lt-shoppingapp-sa1
+        env: |
+          [
+            {
+            "name": "webUIUrl",
+            "value": "$(webUiCaUrl)"
+            }
+          ]     

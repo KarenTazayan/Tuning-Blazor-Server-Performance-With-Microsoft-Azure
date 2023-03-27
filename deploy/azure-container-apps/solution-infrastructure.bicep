@@ -23,6 +23,7 @@ var revisionSuffix = 'v${replace(semVer, '.', '-')}'
 var appiName = 'appi-${appNamePrefix}-${nameSuffix}'
 var logName = 'log-${appNamePrefix}-${nameSuffix}'
 var shoppingAppCaeName = 'ctapenv-${appNamePrefix}-${nameSuffix}'
+var loadTestName = 'lt-${appNamePrefix}-${nameSuffix}'
 
 // Microsoft Orleans Hosting
 var storageName = 'st${appNamePrefix}${nameSuffix}'
@@ -37,7 +38,25 @@ var webUiStorageBlobContainerName = 'web-ui-data-protection'
 var webUiCaName = 'ctap-${appNamePrefix}-ui-${nameSuffix}'
 
 var tags = {
-  Purpose: 'Azure Workshop'
+  Purpose: 'Tuning Blazor Server'
+}
+
+resource loadTest 'Microsoft.LoadTestService/loadTests@2022-12-01' = {
+  name: loadTestName
+  location: location
+  tags: tags
+}
+
+resource loadTestRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: loadTest
+  name: guid(loadTestName)
+  properties: {
+    // Contributor
+    // https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+    principalId: executorSecurityPrincipal
+    principalType: 'ServicePrincipal'
+  }
 }
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
@@ -309,7 +328,7 @@ resource siloHostCa 'Microsoft.App/containerApps@2022-10-01' = {
             }
             {
               name: 'APPINSIGHTS_CONNECTION_STRING'
-              value: reference(appi.id, '2020-02-02').ConnectionString
+              value: appi.properties.ConnectionString
             }
           ]
         }
@@ -373,7 +392,7 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
             }
             {
               name: 'APPINSIGHTS_CONNECTION_STRING'
-              value: reference(appi.id, '2020-02-02').ConnectionString
+              value: appi.properties.ConnectionString
             }
             {
               name: 'AZURE_BLOB_STORAGE_FOR_WEB_UI_URI'
@@ -388,7 +407,7 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 8
+        maxReplicas: 4
         rules: [
           {
             name: 'http-requests'
@@ -404,4 +423,4 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
   }
 }
 
-output fullReferenceOutput object = keyVault.properties
+output webUiCaUrl string = webUiCa.properties.latestRevisionFqdn

@@ -1,7 +1,6 @@
 using Microsoft.ApplicationInsights.Extensibility;
 using MudBlazor.Services;
 using Orleans.Configuration;
-using Orleans.Hosting;
 using ShoppingApp.WebUI;
 using ShoppingApp.WebUI.Extensions;
 using ShoppingApp.WebUI.Services;
