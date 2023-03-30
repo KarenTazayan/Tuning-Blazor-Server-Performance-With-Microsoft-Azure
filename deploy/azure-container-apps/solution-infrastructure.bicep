@@ -1,6 +1,6 @@
 @description('A suffix for resource names uniqueness.')
 param nameSuffix string = 'd1'
-param appNamePrefix string ='shoppingapp'
+param appNamePrefix string ='shoppingapp1'
 param semVer string = 'latest'
 param location string = resourceGroup().location
 param executorSecurityPrincipal string

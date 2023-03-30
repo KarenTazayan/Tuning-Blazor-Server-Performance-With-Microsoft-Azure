@@ -304,11 +304,11 @@ stages:
         azureSubscription: 'DefaultAzureServiceConnection'
         loadTestConfigFile: 'test/ShoppingApp.LoadTests/ShoppingApp.WebUI.DefaultTests.yaml'
         resourceGroup: $(resourceGroupName)-$(nameSuffix)
-        loadTestResource: lt-shoppingapp-sa1
+        loadTestResource: 'lt-$(appNamePrefix)-$(nameSuffix)'
         env: |
           [
             {
             "name": "webUIUrl",
             "value": "$(webUiCaUrl)"
             }
-          ]     
+          ]
