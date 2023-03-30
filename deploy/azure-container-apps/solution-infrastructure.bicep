@@ -378,8 +378,8 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
           image: '${acrUrl}/shoppingapp/webui:${semVer}'
           name: 'web-ui'
           resources: {
-            cpu: json('0.75')
-            memory: '1.5Gi'
+            cpu: json('0.5')
+            memory: '1Gi'
           }
           env: [
             {
@@ -407,13 +407,13 @@ resource webUiCa 'Microsoft.App/containerApps@2022-10-01' = {
       ]
       scale: {
         minReplicas: 1
-        maxReplicas: 4
+        maxReplicas: 1
         rules: [
           {
             name: 'http-requests'
             http: {
               metadata: {
-                concurrentRequests: '75'
+                concurrentRequests: '100'
               }
             }
           }

@@ -3,7 +3,7 @@ variables:
   # Staging 'sa1, sa2 sa3, ...'
   # s - staging a - advanced => sa
   nameSuffix: 'sa1'
-  appNamePrefix: 'shoppingapp'
+  appNamePrefix: 'shoppingapp1'
 
 trigger:
 - main
@@ -181,7 +181,7 @@ stages:
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   variables:
       azureServiceConnection: 'DefaultAzureServiceConnection'
-      resourceGroupName: 'rg-shopping-app'
+      resourceGroupName: 'rg-$(appNamePrefix)'
       location: 'eastus'
       templateFile: '$(Pipeline.Workspace)/infrastructure/solution-infrastructure.bicep'
       acrUrl: $[ stageDependencies.Provision_Azure_Container_Registry.Deploy_Azure_Container_Registry.outputs['t2.acrUrl'] ]
@@ -293,7 +293,7 @@ stages:
   variables:
     webUiCaUrl: $[ stageDependencies.Provision_Staging_Infrastructure.Deploy_Infrastructure_Staging.outputs['Deploy_Infrastructure_Staging.t1.webUiCaUrl'] ]
     azureServiceConnection: 'DefaultAzureServiceConnection'
-    resourceGroupName: 'rg-shopping-app'
+    resourceGroupName: 'rg-$(appNamePrefix)'
   jobs:
   - job: Run_Load_Tests
     pool:
