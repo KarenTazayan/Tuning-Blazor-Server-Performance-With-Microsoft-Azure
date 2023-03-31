@@ -9,25 +9,25 @@
 # Warning! Doing Docker within a Docker by using Docker socket has 
 # serious security implications. The code inside the container can 
 # now run as root on your Docker host. Please be very careful.
-docker run -v /var/run/docker.sock:/var/run/docker.sock `
-    -e AZP_URL=https://dev.azure.com/scaling-blazor-server-1 `
-    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Ubuntu-20.04 `
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+    -e AZP_URL=https://dev.azure.com/devops-workshop-10 \
+    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Ubuntu-20.04 \
     -e AZP_POOL=Default -e AZP_WORK=_work --name 01_Ubuntu-20.04 azure-pipelines-agents-ubuntu-20.04:22032023
 
 # PowerShell Syntax
 # Warning! Doing Docker within a Docker by using Docker socket has 
 # serious security implications. The code inside the container can 
 # now run as root on your Docker host. Please be very careful.
-docker run -v /var/run/docker.sock:/var/run/docker.sock `
-    -e AZP_URL=https://dev.azure.com/scaling-blazor-server-1 `
-    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Debian-10.13 `
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+    -e AZP_URL=https://dev.azure.com/devops-workshop-10 \
+    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Debian-10.13 \
     -e AZP_POOL=Default -e AZP_WORK=_work --name 01_Debian-10.13 azure-pipelines-agents-debian-10.13:22032023
 
 # PowerShell Syntax
 # Warning! Doing Docker within a Docker by using Docker socket has 
 # serious security implications. The code inside the container can 
 # now run as root on your Docker host. Please be very careful.
-docker run -v /var/run/docker.sock:/var/run/docker.sock `
-    -e AZP_URL=https://dev.azure.com/scaling-blazor-server-1 `
-    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Playwright-1.31.0 `
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+    -e AZP_URL=https://dev.azure.com/devops-workshop-10 \
+    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Playwright-1.31.0 \
     -e AZP_POOL=Default -e AZP_WORK=_work --name 01_Playwright-1.31.0 azure-pipelines-agents-playwright-1.31.0:20032023

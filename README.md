@@ -77,9 +77,9 @@ docker build -t azure-pipelines-agents-playwright-1.31.0:22032023 .
 Create [Azure DevOps personal access token (PAT token)](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate). For the scope select: Agent Pools (read, manage), Deployment group (read, manage).  
 Run Debian or Ubuntu based Azure Pipelines agent by using the following command:
 ```
-docker run -v /var/run/docker.sock:/var/run/docker.sock `
-    -e AZP_URL=https://dev.azure.com/devops-workshop-10 `
-    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Debian-10.13 `
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+    -e AZP_URL=https://dev.azure.com/devops-workshop-10 \
+    -e AZP_TOKEN=<PAT token> -e AZP_AGENT_NAME=01_Debian-10.13 \
     -e AZP_POOL=Default -e AZP_WORK=_work --name 01_Debian-10.13 azure-pipelines-agents-debian-10.13:22032023
 ```
 The syntax above uses PowerShell. If you use Bash shell, just replace "`" (backtick) with "\\" (backslash).  
